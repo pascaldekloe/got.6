@@ -10,7 +10,7 @@ var uncompressedMode = errors.New("fax: uncompressed mode not supported")
 func extension(d *decoder) error {
 	extension := d.head >> 22
 	extension &= 0x7
-	handler := extentionTable[extension]
+	handler := extensionTable[extension]
 	if handler == nil {
 		return fmt.Errorf("fax: unknown extension 0b%03b", extension)
 	}
@@ -20,7 +20,7 @@ func extension(d *decoder) error {
 	return handler(d)
 }
 
-var extentionTable = [8]func(d *decoder) error{
+var extensionTable = [8]func(d *decoder) error{
 	nil,
 	nil,
 	nil,

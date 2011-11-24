@@ -18,7 +18,7 @@ const (
 
 // DecodeG4 reads a Group 4 fax image from feed.
 // The width will be applied as specified and the
-// (esteminated) height helps memory allocation.
+// (estimated) height helps memory allocation.
 func DecodeG4(feed io.ByteReader, width, height int) (image.Image, error) {
 	if width <= 0 {
 		return new(image.Gray), nil
