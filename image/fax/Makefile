@@ -5,6 +5,7 @@
 include $(GOROOT)/src/Make.inc
 
 TARG=image/fax
-GOFILES=extension.go reader.go
+GOFILES=extension.go read.go
+CLEANFILES+=testdata/red.png
 
 include $(GOROOT)/src/Make.pkg
