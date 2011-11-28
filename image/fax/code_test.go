@@ -23,7 +23,7 @@ var verticalCodes = map[int]string{
 }
 
 // Table 2/T.6
-var whiteCodes = [64]string{
+var whiteCodes = [...]string{
 	"00110101",
 	"000111",
 	"0111",
@@ -91,7 +91,7 @@ var whiteCodes = [64]string{
 }
 
 // Table 2/T.6
-var blackCodes = [64]string{
+var blackCodes = [...]string{
 	"0000110111",
 	"010",
 	"11",
@@ -159,7 +159,7 @@ var blackCodes = [64]string{
 }
 
 // Table 3/T.6
-var whiteMakeUpCodes = [27]string{
+var whiteMakeUpCodes = [...]string{
 	"11011",
 	"10010",
 	"010111",
@@ -190,7 +190,7 @@ var whiteMakeUpCodes = [27]string{
 }
 
 // Table 3/T.6
-var blackMakeUpCodes = [27]string{
+var blackMakeUpCodes = [...]string{
 	"0000001111",
 	"000011001000",
 	"000011001001",
@@ -221,7 +221,7 @@ var blackMakeUpCodes = [27]string{
 }
 
 // Table 3/T.6
-var sharedMakeUpCodes = [13]string{
+var sharedMakeUpCodes = [...]string{
 	"00000001000",
 	"00000001100",
 	"00000001101",

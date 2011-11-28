@@ -4,9 +4,11 @@
 
 // Package fax supports CCITT Group 4 image decompression
 // as described by ITU-T Recommendation T.6.
+// See http://www.itu.int/rec/T-REC-T.6-198811-I
 package fax
 
 import (
+	"errors"
 	"image"
 	"io"
 )
@@ -16,11 +18,16 @@ const (
 	black = 0x00
 )
 
-// DecodeG4 reads a Group 4 fax image from feed.
+var negativeWidth = errors.New("fax: negative width specified")
+
+// DecodeG4 parses a Group 4 fax image from reader.
 // The width will be applied as specified and the
 // (estimated) height helps memory allocation.
-func DecodeG4(feed io.ByteReader, width, height int) (image.Image, error) {
-	if width <= 0 {
+func DecodeG4(reader io.ByteReader, width, height int) (image.Image, error) {
+	if width < 0 {
+		return nil, negativeWidth
+	}
+	if width == 0 {
 		return new(image.Gray), nil
 	}
 	if height <= 0 {
@@ -34,19 +41,19 @@ func DecodeG4(feed io.ByteReader, width, height int) (image.Image, error) {
 	}
 
 	// read first 4 bytes
-	var init uint
+	var head uint
 	for i := 4; i != 0; i-- {
-		init <<= 8
-		c, e := feed.ReadByte()
+		head <<= 8
+		c, e := reader.ReadByte()
 		if e != nil {
 			return nil, e
 		}
-		init |= uint(c)
+		head |= uint(c)
 	}
 
 	d := &decoder{
-		feed:      feed,
-		head:      init,
+		reader:    reader,
+		head:      head,
 		bitCount:  32,
 		pixels:    pixels,
 		width:     width,
@@ -57,32 +64,31 @@ func DecodeG4(feed io.ByteReader, width, height int) (image.Image, error) {
 }
 
 type decoder struct {
-	// The feed is the data source
-	feed io.ByteReader
+	// reader is the data source
+	reader io.ByteReader
 
-	// The head contains the current data in the stream.
+	// head contains the current data in the stream.
 	// The first upcoming bit is packed in the 32nd bit, the
 	// second upcoming bit in the 31st, etc.
 	head uint
 
-	// The number of bits loaded in head.
+	// bitCount is the number of bits loaded in head.
 	bitCount uint
 
-	// The pixels are black and white values.
+	// pixels are black and white values.
 	pixels []byte
 
-	// The line length in pixels.
+	// width is the line length in pixels.
 	width int
 
-	// If and only if a0 is before the begginning of a line
-	// then atNewLine is true.
+	// atNewLine is whether a0 is before the beginning of a line.
 	atNewLine bool
 
-	// The color of a0.
+	// color represents the state of a0.
 	color byte
 }
 
-// Pop advances n bits in the stream.
+// pop advances n bits in the stream.
 // The 24-bit end-of-facsimile block exceeds all
 // Huffman codes in length.
 func (d *decoder) pop(n uint) error {
@@ -91,7 +97,7 @@ func (d *decoder) pop(n uint) error {
 	head <<= n
 	count -= n
 	if count < 24 {
-		next, err := d.feed.ReadByte()
+		next, err := d.reader.ReadByte()
 		if err != nil {
 			return err
 		}
@@ -103,7 +109,7 @@ func (d *decoder) pop(n uint) error {
 	return nil
 }
 
-// The paint operation adds n d.pixels in the specified color.
+// paint adds n d.pixels in the specified color.
 func (d *decoder) paint(n int, color byte) {
 	a := d.pixels
 	for ; n != 0; n-- {
@@ -284,7 +290,7 @@ func horizontal(d *decoder) (err error) {
 	return
 }
 
-// In horizontal mode runLength reads the amount of pixels for a color.
+// runLength reads the amount of pixels for a color.
 func (d *decoder) runLength(color byte) (count int, err error) {
 	match := uint16(0xFFFF) // lookup entry
 	for match&0xFC0 != 0 && err == nil {
@@ -309,6 +315,13 @@ func (d *decoder) runLength(color byte) (count int, err error) {
 	}
 	return
 }
+
+// Lookup tables are used by runLength to find Huffman codes. Their index
+// size is large enough to fit the longest code in the group. Shorter codes
+// have duplicate entries with all possible tailing bits.
+// Entries consist of two parts. The 4 most significant bits contain the
+// Huffman code length in bits and the 12 least significant bits contain
+// the pixel count.
 
 var blackShortLookup = [64]uint16{
 	0x0, 0x0, 0x0, 0x0, 0x6009, 0x6008, 0x5007, 0x5007,
