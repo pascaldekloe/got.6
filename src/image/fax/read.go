@@ -40,26 +40,19 @@ func DecodeG4(reader io.ByteReader, width, height int) (image.Image, error) {
 		pixels[i] = white
 	}
 
-	// read first 4 bytes
-	var head uint
-	for i := 4; i != 0; i-- {
-		head <<= 8
-		c, e := reader.ReadByte()
-		if e != nil {
-			return nil, e
-		}
-		head |= uint(c)
-	}
-
 	d := &decoder{
 		reader:    reader,
-		head:      head,
-		bitCount:  32,
 		pixels:    pixels,
 		width:     width,
 		atNewLine: true,
 		color:     white,
 	}
+
+	// initiate d.head
+	if err := d.pop(0); err != nil {
+		return nil, err
+	}
+
 	return d.parse()
 }
 
@@ -96,7 +89,7 @@ func (d *decoder) pop(n uint) error {
 	count := d.bitCount
 	head <<= n
 	count -= n
-	if count < 24 {
+	for count < 24 {
 		next, err := d.reader.ReadByte()
 		if err != nil {
 			return err
