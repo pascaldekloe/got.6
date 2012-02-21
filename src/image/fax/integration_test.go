@@ -6,56 +6,97 @@ package fax
 
 import (
 	"bytes"
+	"image"
+	"image/gif"
 	"image/png"
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
-const (
-	inputFile = "testdata/red.tiff"
-	outputFile = "testdata/red.png"
-	width = 501
-	height = 713
-)
+var testImageNames = []string{"red"}
+var benchmarkImageNames = []string{"red"}
 
-func blob() []byte {
-	data, error := ioutil.ReadFile(inputFile)
-	if error != nil {
-		panic(error)
+func sample(name string) []byte {
+	data, err := ioutil.ReadFile("testdata/" + name + ".tiff")
+	if err != nil {
+		panic(err)
 	}
-	return data[8:23800] // strip TIFF
+	return data[8:] // strip TIFF header
 }
 
-func TestFullRun(t *testing.T) {
-	b := bytes.NewBuffer(blob())
-	result, err := DecodeG4(b, width, height)
+func prototype(name string) (result image.Image) {
+	file, err := os.Open("testdata/" + name + ".gif")
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
-
-	b.Reset()
-	err = png.Encode(b, result)
+	defer file.Close()
+	result, err = gif.Decode(file)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
-
-	err = ioutil.WriteFile(outputFile, b.Bytes(), 0666)
-	if err != nil {
-		t.Fatal(err)
-	}
+	return result
 }
 
-func BenchmarkFullRun(b *testing.B) {
-        b.StopTimer()
-	data := blob()
-        b.SetBytes(int64(len(data)))
-        for rounds := b.N; rounds != 0; rounds-- {
-		source := bytes.NewBuffer(data)
-		b.StartTimer()
-		_, err := DecodeG4(source, width, height)
-		b.StopTimer()
+func TestFullDecode(t *testing.T) {
+	for _, name := range testImageNames {
+		failFile := name + "-fail.png"
+		os.Remove(failFile)
+
+		expected := prototype(name)
+		bounds := expected.Bounds()
+
+		reader := bytes.NewBuffer(sample(name))
+		result, err := DecodeG4(reader, bounds.Dx(), bounds.Dy())
 		if err != nil {
-			panic(err)
+			t.Fatalf("decode %s gave %s", name, err)
 		}
-        }
+		if !bounds.Eq(result.Bounds()) {
+			t.Fatalf("%s bound to %#v", name, result.Bounds())
+		}
+
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+				ra, ga, ba, aa := result.At(x, y).RGBA()
+				rb, gb, bb, ab := expected.At(x, y).RGBA()
+				if ra != rb || ga != gb || ba != bb || aa != ab {
+					file, err := os.Create(failFile)
+					if err != nil {
+						t.Fatalf("create %s gave %s", failFile, err)
+					}
+					defer file.Close()
+
+					err = png.Encode(file, result)
+					if err != nil {
+						t.Fatalf("encode %s gave %s", failFile, err)
+					}
+
+					t.Error("recorded mismatch:", failFile)
+				}
+			}
+		}
+	}
+}
+
+func BenchmarkFullDecode(b *testing.B) {
+	b.StopTimer()
+	var pixelCount int64
+	for _, name := range benchmarkImageNames {
+		data := sample(name)
+		bounds := prototype(name).Bounds()
+		width := bounds.Dx()
+		height := bounds.Dy()
+		pixelCount += int64(width * height)
+
+		for remaining := b.N; remaining > 0; remaining-- {
+			reader := bytes.NewBuffer(data)
+			b.StartTimer()
+			_, err := DecodeG4(reader, width, height)
+			b.StopTimer()
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	}
+	b.SetBytes(pixelCount)
 }
