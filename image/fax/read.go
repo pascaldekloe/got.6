@@ -1,7 +1,3 @@
-// Copyright 2011 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 // Package fax supports CCITT Group 4 image decompression
 // as described by ITU-T Recommendation T.6.
 // See http://www.itu.int/rec/T-REC-T.6-198811-I
