@@ -1,7 +1,7 @@
 // Package fax supports CCITT Group 4 image decompression
 // as described by ITU-T Recommendation T.6.
 // See http://www.itu.int/rec/T-REC-T.6-198811-I
-package fax
+package got6
 
 import (
 	"errors"

@@ -1,4 +1,4 @@
-package fax
+package got6
 
 import (
 	"bytes"

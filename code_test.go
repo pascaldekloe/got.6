@@ -1,4 +1,4 @@
-package fax
+package got6
 
 // The code words from ITU-T Recommendation T.6 in base 2 notation.
 

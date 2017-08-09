@@ -1,4 +1,4 @@
-package fax
+package got6
 
 // Test the decoding.
 
@@ -155,7 +155,7 @@ func verifyImage(t *testing.T, base2 string, pixels string) {
 
 func packImage(base2 string) io.ByteReader {
 	base2 += terminatorCode
-	if tail := len(base2)%8; tail != 0 {
+	if tail := len(base2) % 8; tail != 0 {
 		padBitCount := 8 - tail
 		base2 += strings.Repeat("0", padBitCount)
 	}
