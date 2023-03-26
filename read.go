@@ -117,7 +117,7 @@ func (d *decoder) parse() (result image.Image, err error) {
 	width := d.width
 	pixels := d.pixels[width:] // strip imaginary line
 	bounds := image.Rect(0, 0, width, len(pixels)/width)
-	result = &image.Gray{pixels, width, bounds}
+	result = &image.Gray{Pix: pixels, Stride: width, Rect: bounds}
 	return
 }
 
