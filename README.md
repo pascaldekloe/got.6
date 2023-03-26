@@ -1,4 +1,4 @@
-[![API Documentation](https://godoc.org/github.com/pascaldekloe/got.6?status.svg)](https://godoc.org/github.com/pascaldekloe/got.6)
+[![API](https://pkg.go.dev/badge/github.com/pascaldekloe/got.6.svg)](https://pkg.go.dev/github.com/pascaldekloe/got.6)
 [![CI](https://github.com/pascaldekloe/got.6/actions/workflows/go.yml/badge.svg)](https://github.com/pascaldekloe/got.6/actions/workflows/go.yml)
 
 CCITT fax image library for the Go programming language.
