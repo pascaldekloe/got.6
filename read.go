@@ -16,10 +16,10 @@ const (
 
 var negativeWidth = errors.New("fax: negative width specified")
 
-// DecodeG4 parses a Group 4 fax image from reader.
-// The width will be applied as specified and the
-// (estimated) height helps memory allocation.
-func DecodeG4(reader io.ByteReader, width, height int) (image.Image, error) {
+// DecodeG4 parses a Group 4 fax image from r. An incorrect image width causes
+// malformed image production. The height (estimate) is optional. It helps with
+// memory allocation.
+func DecodeG4(r io.ByteReader, width, height int) (image.Image, error) {
 	if width < 0 {
 		return nil, negativeWidth
 	}
@@ -37,7 +37,7 @@ func DecodeG4(reader io.ByteReader, width, height int) (image.Image, error) {
 	}
 
 	d := &decoder{
-		reader:    reader,
+		reader:    r,
 		pixels:    pixels,
 		width:     width,
 		atNewLine: true,
